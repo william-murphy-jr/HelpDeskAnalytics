@@ -65,7 +65,7 @@ function categoryTally() {
       let timeDiff = date2.getTime() - date1.getTime();
       let hoursDiff = timeDiff / (1000 * 3600);
       // push ticket category and time to close into 2 dimensional array
-      topicsAndTimes.push([category, hoursDiff]);
+      topicsAndTimes.push([category, facility, asr, hoursDiff]);
     }
   }
   // sort the array by category
@@ -84,7 +84,8 @@ function categoryTally() {
   const facilityMap = {}
   
   //for (let i = 0; i < topicsAndTimes.length: i++) {
-    
+    //const asr = topiesAndTimes[i][]
+    //if (categoryMap[]
   //}
   
   
@@ -98,11 +99,11 @@ function categoryTally() {
        targetSheet.getRange(row,6).setValue(hrs.toFixed(2));
        row++; // move to the next row
        comparisonVal = topicsAndTimes[i][0]; // set the comparison value to the first element current sub array
-       hrs = topicsAndTimes[i][1]; // set hours to second element of current sub array
+       hrs = topicsAndTimes[i][3]; // set hours to second element of current sub array
        cntCat = 1; // reset the count to one
        numTopics++; //tracking the total number of topics
      }  else { 
-       hrs+= topicsAndTimes[i][1]; //if the array element IS the same as the comparison value, add to the total hours
+       hrs+= topicsAndTimes[i][3]; //if the array element IS the same as the comparison value, add to the total hours
        cntCat++; //and increment the count
     }
   }
