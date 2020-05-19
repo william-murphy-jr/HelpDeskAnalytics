@@ -79,6 +79,14 @@ function categoryTally() {
   let cntFac = 0; 
   let row = 2;
   let numTopics = 0;
+  const asrMap = {};
+  const categoryMap = {};
+  const facilityMap = {}
+  
+  //for (let i = 0; i < topicsAndTimes.length: i++) {
+    
+  //}
+  
   
   // loop through the array
   for (let i = 0; i < topicsAndTimes.length; i++){
