@@ -1,6 +1,13 @@
-const sourceSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1'); 
+const sourceSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Raw Data'); 
 const lr = sourceSheet.getLastRow();
-const targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet2');
+const lc = souceSheet.getLastColumn();
+const targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Calculated Data');
+
+const headerTitles = ['Facility', 'Number of Tickets', 'Total Hours', 'Average Time to Close','',
+                      'Topic Category', 'Number of Tickets', 'Total Hours', 'Average Time to Close', '',
+                      'ASR', 'Number of Tickets', 'Total Hours', 'Average Time to Close'];
+
+const __DEBUG = true; // see Logger output
 
 function onOpen(e) {
   targetSheet.getRange(2, 1, 50, 50).clearContent();
@@ -8,7 +15,26 @@ function onOpen(e) {
   const menu = ui.createMenu('Custom');
   menu.addItem('Facility Tally', 'facilityTally');
   menu.addItem('Category Tally', 'categoryTally');
+  menu.addItem('ASR Tally', 'asrTally');
   menu.addToUi();
+  addHeaders(headerTitles, 5);
+}
+
+/**
+* Add Headers and add a blank column at seperate column
+*/
+function addHeaders(headers,seperate = 5){
+  // headers = headerTitles; // Uncomment for self-contained testing ONLY
+  let length = headers.length;
+  for (let i = 0; i < length; i++) {
+    const col = i + 1;
+      targetSheet.getRange(1, col).setValue(headers[i]);
+  }
+  __DEBUG && Logger.log(headers);
+}
+
+function asrTally() {
+  Logger.log('asrTally');
 }
 
 function facilityTally() {
@@ -53,19 +79,17 @@ function categoryTally() {
   targetSheet.getRange(2, 4, lr, 4).clearContent();
   // loop through source sheet getting category, start time, and close time for each ticket
   for (let i = 2; i < lr+1; i++){
-    let category = sourceSheet.getRange(i, 13).getValue(); // get category
-    let facility = sourceSheet.getRange(i, 5).getValue(); // get facility
-    let asr = sourceSheet.getRange(i, 6).getValue(); // get ASR 
-    let startTime = sourceSheet.getRange(i, 16).getValue();
-    let closeTime = sourceSheet.getRange(i, 18).getValue(); 
-    // if the ticket was closed, calculate the number of hours from open to close
-    if (closeTime) {
-      let date1 = new Date(startTime);
-      let date2 = new Date(closeTime);
-      let timeDiff = date2.getTime() - date1.getTime();
-      let hoursDiff = timeDiff / (1000 * 3600);
-      // push ticket category and time to close into 2 dimensional array
-      topicsAndTimes.push([category, facility, asr, hoursDiff]);
+   let category = sourceSheet.getRange(i, 13).getValue();
+   let startTime = sourceSheet.getRange(i, 16).getValue();
+   let closeTime = sourceSheet.getRange(i, 18).getValue(); 
+   // if the ticket was closed, calculate the number of hours from open to close
+   if (closeTime) {
+     let date1 = new Date(startTime);
+     let date2 = new Date(closeTime);
+     let timeDiff = date2.getTime() - date1.getTime();
+     let hoursDiff = timeDiff / (1000 * 3600);
+     // push ticket category and time to close into 2 dimensional array
+     topicsAndTimes.push([category, hoursDiff]);
     }
   }
   // sort the array by category
@@ -74,37 +98,26 @@ function categoryTally() {
   // initialize variables for counting unique elements in our array
   let comparisonVal = topicsAndTimes[0][0];
   let hrs = 0;
-  let cntCat = 0;
-  let cntAsr = 0;
-  let cntFac = 0; 
+  let cnt = 0;
   let row = 2;
   let numTopics = 0;
-  const asrMap = {};
-  const categoryMap = {};
-  const facilityMap = {}
-  
-  //for (let i = 0; i < topicsAndTimes.length: i++) {
-    //const asr = topiesAndTimes[i][]
-    //if (categoryMap[]
-  //}
-  
   
   // loop through the array
   for (let i = 0; i < topicsAndTimes.length; i++){
     // if the first element of each sub-array is not the same as the comparison value
     // place it in a cell in column 4 with corresponding count in column 5 and time totals in column 6
     if (topicsAndTimes[i][0] != comparisonVal) {
-       targetSheet.getRange(row,4).setValue(comparisonVal);
-       targetSheet.getRange(row,5).setValue(cntCat);
-       targetSheet.getRange(row,6).setValue(hrs.toFixed(2));
+       targetSheet.getRange(row,6).setValue(comparisonVal);
+       targetSheet.getRange(row,7).setValue(cnt);
+       targetSheet.getRange(row,8).setValue(hrs.toFixed(2));
        row++; // move to the next row
        comparisonVal = topicsAndTimes[i][0]; // set the comparison value to the first element current sub array
-       hrs = topicsAndTimes[i][3]; // set hours to second element of current sub array
-       cntCat = 1; // reset the count to one
+       hrs = topicsAndTimes[i][1]; // set hours to second element of current sub array
+       cnt = 1; // reset the count to one
        numTopics++; //tracking the total number of topics
      }  else { 
-       hrs+= topicsAndTimes[i][3]; //if the array element IS the same as the comparison value, add to the total hours
-       cntCat++; //and increment the count
+       hrs+= topicsAndTimes[i][1]; //if the array element IS the same as the comparison value, add to the total hours
+       cnt++; //and increment the count
     }
   }
   
@@ -112,10 +125,10 @@ function categoryTally() {
   let totalTime = 0;
   // for each row, use the number of tickets and total hours to calculate the average time to close
   for (let i = 2; i < numTopics+2; i++){
-    let numTix = targetSheet.getRange(i, 5).getValue();
-    let time = targetSheet.getRange(i, 6).getValue();
+    let numTix = targetSheet.getRange(i, 7).getValue();
+    let time = targetSheet.getRange(i, 8).getValue();
     let averageTime = (time / numTix)/24.0;
-    targetSheet.getRange(i, 7).setValue(averageTime);
+    targetSheet.getRange(i, 9).setValue(averageTime);
     // tracking the total number of tickets and total time for all tickets
     totalTix += numTix;
     totalTime += time;
@@ -123,9 +136,9 @@ function categoryTally() {
   
   let totalAverageTime = (totalTime / totalTix) / 24.0;
   // write information about totals to last row
-  targetSheet.getRange(numTopics+2, 4).setValue('Total');
-  targetSheet.getRange(numTopics+2, 5).setValue(totalTix);
-  targetSheet.getRange(numTopics+2, 6).setValue(totalTime);
-  targetSheet.getRange(numTopics+2, 7).setValue(totalAverageTime);  
+  targetSheet.getRange(numTopics+2, 6).setValue('Total');
+  targetSheet.getRange(numTopics+2, 7).setValue(totalTix);
+  targetSheet.getRange(numTopics+2, 8).setValue(totalTime);
+  targetSheet.getRange(numTopics+2, 9).setValue(totalAverageTime);  
 }
 
