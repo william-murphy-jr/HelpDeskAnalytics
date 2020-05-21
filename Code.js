@@ -1,7 +1,14 @@
+// const sourceSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Raw Data'); 
+// const lr = sourceSheet.getLastRow();
+// const lc = souceSheet.getLastColumn();
+// const targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Calculated Data');
+
 const sourceSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Raw Data'); 
-const lr = sourceSheet.getLastRow();
-const lc = souceSheet.getLastColumn();
 const targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Calculated Data');
+const lastRow = sourceSheet.getLastRow();
+const lastColumn = sourceSheet.getLastColumn();
+const searchRange = sourceSheet.getRange(2,1, lastRow, lastColumn);
+const rangeValues = searchRange.getValues(); // [2 - lastRow, 1 to lastColumn] matrix??? look at
 
 const headerTitles = ['Facility', 'Number of Tickets', 'Total Hours', 'Average Time to Close','',
                       'Topic Category', 'Number of Tickets', 'Total Hours', 'Average Time to Close', '',
@@ -20,23 +27,51 @@ function onOpen(e) {
   addHeaders(headerTitles, 5);
 }
 
+function sortData() {
+  let rowsData = [];
+  for (let i = 0; i < rangeValues.length; i++){
+    let tempFacility = rangeValues[i][4];
+    let tempASR = rangeValues[i][5];
+    let tempCategory = rangeValues[i][12]; 
+    let tempStart = rangeValues[i][15];
+    let tempClose = rangeValues[i][17]; 
+    let tempTimeToClose = 'ticket is not closed';
+    if (tempClose) {
+      let date1 = new Date(tempStart);
+      let date2 = new Date(tempClose);
+      let timeDiff = date2.getTime() - date1.getTime();
+      tempTimeToClose = timeDiff / (1000 * 3600);
+    }
+    let row = {
+      facility: tempFacility,
+      asr: tempASR,
+      category: tempCategory,
+      timeToClose: tempTimeToClose
+    };
+    rowsData.push(row);
+  }
+  return rowsData;
+}
+
 /**
 * Add Headers and add a blank column at seperate column
 */
 function addHeaders(headers,seperate = 5){
-  // headers = headerTitles; // Uncomment for self-contained testing ONLY
+  headers = headerTitles; // Uncomment for self-contained testing ONLY
   let length = headers.length;
   for (let i = 0; i < length; i++) {
     const col = i + 1;
       targetSheet.getRange(1, col).setValue(headers[i]);
   }
   __DEBUG && Logger.log(headers);
+  __DEBUG && Logger.log('\n\n', rangeValues);
 }
 
 function asrTally() {
   Logger.log('asrTally');
 }
 
+/*
 function facilityTally() {
     var facilities = [];
   
@@ -142,3 +177,4 @@ function categoryTally() {
   targetSheet.getRange(numTopics+2, 9).setValue(totalAverageTime);  
 }
 
+*/
